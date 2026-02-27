@@ -20,8 +20,6 @@ const Orders = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  if (!user) { navigate('/auth'); return null; }
-
   const deleteOrder = useMutation({
     mutationFn: async (id: string) => {
       const { error: itemsErr } = await supabase.from('order_items').delete().eq('order_id', id);
@@ -34,16 +32,19 @@ const Orders = () => {
   });
 
   const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['orders', user.id],
+    queryKey: ['orders', user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from('orders')
         .select('*, order_items(*, products(name))')
-        .eq('user_id', user.id)
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       return data || [];
     },
+    enabled: !!user,
   });
+
+  if (!user) { navigate('/auth'); return null; }
 
   return (
     <div className="container mx-auto px-4 py-8">
