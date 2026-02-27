@@ -251,6 +251,16 @@ const OrdersTab = () => {
 
   const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
+  const deleteOrder = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: itemsErr } = await supabase.from('order_items').delete().eq('order_id', id);
+      if (itemsErr) throw itemsErr;
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-orders'] }); toast.success('Order deleted'); },
+  });
+
   return (
     <div>
       <h2 className="font-display text-xl font-semibold mb-4">Orders ({orders.length})</h2>
@@ -264,7 +274,7 @@ const OrdersTab = () => {
                 <p className="text-sm text-muted-foreground">Customer ID: {order.user_id?.slice(0, 8)}</p>
                 <p className="text-sm text-muted-foreground">Address: {order.shipping_address || '—'}</p>
               </div>
-              <div className="text-right">
+              <div className="text-right space-y-2">
                 <p className="text-lg font-semibold">${order.total.toFixed(2)}</p>
                 <Select value={order.status} onValueChange={(v) => updateStatus.mutate({ id: order.id, status: v })}>
                   <SelectTrigger className="mt-2 w-36"><SelectValue /></SelectTrigger>
@@ -272,6 +282,9 @@ const OrdersTab = () => {
                     {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteOrder.mutate(order.id)}>
+                  <Trash2 className="mr-1 h-4 w-4" /> Delete
+                </Button>
               </div>
             </div>
             <div className="mt-3 text-sm text-muted-foreground">

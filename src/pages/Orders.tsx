@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Package, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const statusColor: Record<string, string> = {
   pending: 'bg-warning/20 text-warning',
@@ -16,8 +18,20 @@ const statusColor: Record<string, string> = {
 const Orders = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   if (!user) { navigate('/auth'); return null; }
+
+  const deleteOrder = useMutation({
+    mutationFn: async (id: string) => {
+      const { error: itemsErr } = await supabase.from('order_items').delete().eq('order_id', id);
+      if (itemsErr) throw itemsErr;
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }); toast.success('Order deleted'); },
+    onError: (err: any) => toast.error(err.message || 'Cannot delete this order'),
+  });
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', user.id],
@@ -56,6 +70,11 @@ const Orders = () => {
                 <div className="flex items-center gap-3">
                   <Badge className={statusColor[order.status] || ''} variant="secondary">{order.status}</Badge>
                   <span className="font-semibold">${order.total.toFixed(2)}</span>
+                  {order.status === 'pending' && (
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteOrder.mutate(order.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               <div className="mt-3 text-sm text-muted-foreground">
