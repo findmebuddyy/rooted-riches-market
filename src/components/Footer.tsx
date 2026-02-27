@@ -8,7 +8,7 @@ const Footer = () => (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Leaf className="h-5 w-5 text-primary" />
-            <span className="font-display text-lg font-bold">EcoWood</span>
+            <span className="font-display text-lg font-bold">Prosopis</span>
           </div>
           <p className="text-sm text-muted-foreground max-w-xs">
             Transforming invasive Prosopis juliflora into sustainable, beautiful products. Every purchase helps restore ecosystems.
@@ -29,7 +29,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} EcoWood. All rights reserved.
+        © {new Date().getFullYear()} Prosopis. All rights reserved.
       </div>
     </div>
   </footer>
